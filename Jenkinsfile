@@ -22,7 +22,7 @@ pipeline{
             }
             post{
                 success{
-                     mail to: "woofwoofpoodle@gmail.com",
+                     mail to: "neethuchandhavarkar2003@gmail.com",
                     subject: "test status email",
                     body: "test is completed"
                 }
@@ -40,7 +40,7 @@ pipeline{
             }
             post{
                 success{
-                    mail to: "woofwoofpoodle@gmail.com",
+                    mail to: "neethuchandhavarkar2003@gmail.com",
                     subject: "security scan stage ${currentBuild.result}",
                     body: "security scan completed"
                 }
