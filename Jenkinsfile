@@ -20,6 +20,18 @@ pipeline {
                 echo "Run integration tests"
                 echo "John is used as the automation tool"
             }
+            post {
+                success {
+                    mail to: "neethuchandhavarkar2003@gmail.com",
+                         subject: "Test Status Email",
+                         body: "Tests have been completed successfully."
+                }
+                failure {
+                    mail to: "neethuchandhavarkar2003@gmail.com",
+                         subject: "Test Status Email - Failed",
+                         body: "Tests have failed. Please check the build logs."
+                }
+            }
         }
 
         stage('Code Analysis') {
@@ -32,6 +44,18 @@ pipeline {
         stage('Security Scan') {
             steps {
                 echo "Veracode used for security scan"
+            }
+            post {
+                success {
+                    mail to: "neethuchandhavarkar2003@gmail.com",
+                         subject: "Security Scan Status",
+                         body: "Security scan has been completed successfully."
+                }
+                failure {
+                    mail to: "neethuchandhavarkar2003@gmail.com",
+                         subject: "Security Scan Status - Failed",
+                         body: "Security scan has failed. Please review the scan results."
+                }
             }
         }
 
