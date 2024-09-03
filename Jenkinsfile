@@ -1,115 +1,106 @@
 pipeline {
     agent any
-    
     environment {
-        // Define any environment variables needed here
+        DIRECTORYPATH = "DIRECTORY_PATH"
+        TESTINGENVIRONMENT = "TESTING_ENVIRONMENT"
+        PRODUCTIONENVIRONMENT = "NeethuProdEnv"
     }
-
     stages {
-        stage('Checkout SCM') {
+        stage('Build') {
             steps {
-                echo 'Checking out source code from Git repository'
-                checkout([$class: 'GitSCM', 
-                          userRemoteConfigs: [[url: 'https://github.com/neethuchandhavarkar/SIT-223-6.1C']],
-                          scm: [$class: 'GitSCM', 
-                                userRemoteConfigs: [[url: 'https://github.com/neethuchandhavarkar/SIT-223-6.1C']],
-                                branches: [[name: '*/main']]
-                          ]])
+                echo "Fetch the source code from ${DIRECTORYPATH}"
+                echo "Compile the code and generate any necessary artifacts"
+                echo "The code is built using the build automation tool named John"
             }
         }
         
-        stage('Build') {
-            steps {
-                echo 'Building the project'
-                echo 'Fetching the source code from the directory'
-                echo 'Compiling the code and generating necessary artifacts'
-                echo 'Using build automation tool named John'
-                // Add your build commands here
-            }
-        }
-
         stage('Unit and Integration Tests') {
             steps {
-                echo 'Running unit tests'
-                echo 'Running integration tests'
-                echo 'Using automation tool John'
-                // Add your test commands here
+                echo "Running unit tests"
+                echo "Running integration tests"
+                echo "John used the automation tool"
+            }
+            post {
+                success {
+                    emailext(
+                        to: "neethuchandhavarkar2003@gmail.com",
+                        subject: "Unit and Integration Tests Completed Successfully",
+                        body: "Tests are completed successfully."
+                    )
+                }
+                failure {
+                    emailext(
+                        to: "neethuchandhavarkar2003@gmail.com",
+                        subject: "Unit and Integration Tests Failed",
+                        body: "Some of the tests have failed. Please check the Jenkins build logs for details."
+                    )
+                }
             }
         }
-
+        
         stage('Code Analysis') {
             steps {
-                echo 'Analyzing code quality'
-                echo 'Using SonarQube for code analysis'
-                // Add your code analysis commands here
+                echo "Checking the quality of the code"
+                echo "SonarQube was used as a tool"
             }
         }
-
+        
         stage('Security Scan') {
             steps {
                 script {
-                    try {
-                        echo 'Performing security scan'
-                        // Add your security scan commands here
-                    } catch (Exception e) {
-                        currentBuild.result = 'FAILURE'
-                        echo "Security scan failed: ${e.message}"
-                    }
+                    def securityScanOutput = sh(script: 'echo "Running VeraCode security scan..." && echo "VeraCode scan complete!" || true', returnStdout: true).trim()
+                    echo securityScanOutput
+                    env.SECURITY_SCAN_LOGS = securityScanOutput
+                }
+            }
+            post {
+                success {
+                    emailext(
+                        to: "neethuchandhavarkar2003@gmail.com",
+                        subject: "Security Scan Completed Successfully",
+                        body: "Security scan completed successfully.\n\nLogs:\n${env.SECURITY_SCAN_LOGS}",
+                        attachLog: true
+                    )
+                }
+                failure {
+                    emailext(
+                        to: "neethuchandhavarkar2003@gmail.com",
+                        subject: "Security Scan Failed",
+                        body: "Security scan failed.\n\nLogs:\n${env.SECURITY_SCAN_LOGS}",
+                        attachLog: true
+                    )
                 }
             }
         }
-
+        
         stage('Deploy to Staging') {
-            when {
-                expression {
-                    return currentBuild.result == 'SUCCESS'
-                }
-            }
             steps {
-                echo 'Deploying to staging environment'
-                // Add your deployment commands here
+                echo "Deploying the application to a staging server"
             }
         }
-
+        
         stage('Integration Tests on Staging') {
-            when {
-                expression {
-                    return currentBuild.result == 'SUCCESS'
-                }
-            }
             steps {
-                echo 'Running integration tests on staging'
-                // Add your integration test commands here
+                echo "Running integration tests on the staging environment to ensure the application functions as expected in a production-like environment"
             }
         }
-
+        
         stage('Deploy to Production') {
-            when {
-                expression {
-                    return currentBuild.result == 'SUCCESS'
-                }
-            }
             steps {
-                echo 'Deploying to production environment'
-                // Add your production deployment commands here
+                echo "Deploying the code to ${PRODUCTIONENVIRONMENT}"
+                echo "Deploying the application to a production server"
             }
         }
     }
-
     post {
         always {
-            echo 'Sending email notification'
-            mail to: 'neethuchandhavarkar2003@gmail.com',
-                 subject: "Build ${currentBuild.currentResult}: ${currentBuild.fullDisplayName}",
-                 body: "Build ${currentBuild.fullDisplayName} completed with status: ${currentBuild.currentResult}. Check Jenkins for details.",
-                 attachmentsPattern: '**/build/logs/*.log'  // Adjust the pattern to match your log files
-        }
-        failure {
-            echo 'Build failed'
-            mail to: 'neethuchandhavarkar2003@gmail.com',
-                 subject: "Build FAILED: ${currentBuild.fullDisplayName}",
-                 body: "Build ${currentBuild.fullDisplayName} failed. Check Jenkins for details.",
-                 attachmentsPattern: '**/build/logs/*.log'  // Adjust the pattern to match your log files
+            echo "Sending build notification email"
+            emailext(
+                to: "neethuchandhavarkar2003@gmail.com",
+                subject: "Build ${currentBuild.currentResult}: ${currentBuild.fullDisplayName}",
+                body: "Build ${currentBuild.fullDisplayName} completed with status: ${currentBuild.currentResult}. Check Jenkins for details.",
+                attachLog: true
+            )
         }
     }
 }
