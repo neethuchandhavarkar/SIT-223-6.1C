@@ -4,7 +4,6 @@ pipeline {
         DIRECTORYPATH = "DIRECTORY_PATH"
         TESTINGENVIRONMENT = "TESTING_ENVIRONMENT"
         PRODUCTIONENVIRONMENT = "NeethuProdEnv"
-        LOGFILE = "build_log.txt"
     }
     stages {
         stage('Build') {
@@ -58,17 +57,11 @@ pipeline {
 
     post {
         always {
-            // Save the build log to a file
-            script {
-                def logContent = currentBuild.rawBuild.getLog(1000).join("\n")
-                writeFile file: "${LOGFILE}", text: logContent
-            }
-            // Send the email with the log file attached
+            // Send the email with the build log attached
             mail to: "neethuchandhavarkar2003@gmail.com",
                  subject: "Build Status: ${currentBuild.currentResult}",
-                 body: "The build has completed with status: ${currentBuild.currentResult}. Please find the log attached.",
-                 attachLog: true,
-                 attachmentsPattern: "${LOGFILE}"
+                 body: "The build has completed with status: ${currentBuild.currentResult}. Please check the attached log for details.",
+                 attachLog: true
         }
     }
 }
