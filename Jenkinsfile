@@ -4,6 +4,7 @@ pipeline {
         DIRECTORYPATH = "DIRECTORY_PATH"
         TESTINGENVIRONMENT = "TESTING_ENVIRONMENT"
         PRODUCTIONENVIRONMENT = "NeethuProdEnv"
+        LOGFILE = "build_log.txt"
     }
     stages {
         stage('Build') {
@@ -20,18 +21,6 @@ pipeline {
                 echo "Run integration tests"
                 echo "John is used as the automation tool"
             }
-            post {
-                success {
-                    mail to: "neethuchandhavarkar2003@gmail.com",
-                         subject: "Test Status Email",
-                         body: "Tests have been completed successfully."
-                }
-                failure {
-                    mail to: "neethuchandhavarkar2003@gmail.com",
-                         subject: "Test Status Email - Failed",
-                         body: "Tests have failed. Please check the build logs."
-                }
-            }
         }
 
         stage('Code Analysis') {
@@ -44,18 +33,6 @@ pipeline {
         stage('Security Scan') {
             steps {
                 echo "Veracode used for security scan"
-            }
-            post {
-                success {
-                    mail to: "neethuchandhavarkar2003@gmail.com",
-                         subject: "Security Scan Status",
-                         body: "Security scan has been completed successfully."
-                }
-                failure {
-                    mail to: "neethuchandhavarkar2003@gmail.com",
-                         subject: "Security Scan Status - Failed",
-                         body: "Security scan has failed. Please review the scan results."
-                }
             }
         }
 
@@ -76,6 +53,22 @@ pipeline {
                 echo "Deploy the code to ${PRODUCTIONENVIRONMENT}"
                 echo "Deploy the application to a production server"
             }
+        }
+    }
+
+    post {
+        always {
+            // Save the build log to a file
+            script {
+                def logContent = currentBuild.rawBuild.getLog(1000).join("\n")
+                writeFile file: "${LOGFILE}", text: logContent
+            }
+            // Send the email with the log file attached
+            mail to: "neethuchandhavarkar2003@gmail.com",
+                 subject: "Build Status: ${currentBuild.currentResult}",
+                 body: "The build has completed with status: ${currentBuild.currentResult}. Please find the log attached.",
+                 attachLog: true,
+                 attachmentsPattern: "${LOGFILE}"
         }
     }
 }
