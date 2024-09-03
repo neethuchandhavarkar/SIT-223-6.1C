@@ -5,64 +5,98 @@ pipeline {
         TESTINGENVIRONMENT = "TESTING_ENVIRONMENT"
         PRODUCTIONENVIRONMENT = "NeethuProdEnv"
     }
+    triggers {
+        pollSCM('H/5 * * * *')  // Poll the SCM every 5 minutes to check for new commits
+    }
     stages {
         stage('Build') {
             steps {
-                echo "Fetch the source code from ${DIRECTORYPATH}"
-                echo "Compile the code and generate any necessary artifacts"
-                echo "The code is built using the automation tool named John"
+                echo "Fetching the source code from ${DIRECTORYPATH}"
+                echo "Building the code using Maven or Gradle"
+                echo "Compile and package the code"
             }
         }
 
         stage('Unit and Integration Tests') {
             steps {
-                echo "Run unit tests"
-                echo "Run integration tests"
-                echo "John is used as the automation tool"
+                echo "Running unit tests using JUnit or TestNG"
+                echo "Running integration tests to ensure all components work together"
+            }
+            post {
+                success {
+                    emailext(
+                        to: 'neethuchandhavarkar2003@gmail.com',
+                        subject: "Unit and Integration Tests - SUCCESS",
+                        body: "The Unit and Integration Tests have completed successfully.",
+                        attachLog: true
+                    )
+                }
+                failure {
+                    emailext(
+                        to: 'neethuchandhavarkar2003@gmail.com',
+                        subject: "Unit and Integration Tests - FAILURE",
+                        body: "The Unit and Integration Tests have failed.",
+                        attachLog: true
+                    )
+                }
             }
         }
 
         stage('Code Analysis') {
             steps {
-                echo "Check the quality of the code"
-                echo "SonarQube was used as a tool"
+                echo "Performing code analysis using SonarQube"
+                echo "Analyzing code quality and ensuring industry standards"
             }
         }
 
         stage('Security Scan') {
             steps {
-                echo "Veracode used for security scan"
+                echo "Performing security scan using Veracode"
+                echo "Identifying vulnerabilities in the code"
+            }
+            post {
+                success {
+                    emailext(
+                        to: 'neethuchandhavarkar2003@gmail.com',
+                        subject: "Security Scan - SUCCESS",
+                        body: "The Security Scan has completed successfully.",
+                        attachLog: true
+                    )
+                }
+                failure {
+                    emailext(
+                        to: 'neethuchandhavarkar2003@gmail.com',
+                        subject: "Security Scan - FAILURE",
+                        body: "The Security Scan has failed.",
+                        attachLog: true
+                    )
+                }
             }
         }
 
         stage('Deploy to Staging') {
             steps {
-                echo "Deploy the application to a staging server"
+                echo "Deploying the application to the staging server (e.g., AWS EC2)"
             }
         }
 
         stage('Integration Tests on Staging') {
             steps {
-                echo "Run integration tests on the staging environment to ensure the application functions as expected in a production-like environment"
+                echo "Running integration tests on the staging environment"
+                echo "Ensuring the application functions as expected in a production-like environment"
             }
         }
 
         stage('Deploy to Production') {
             steps {
-                echo "Deploy the code to ${PRODUCTIONENVIRONMENT}"
-                echo "Deploy the application to a production server"
+                echo "Deploying the application to the production server (e.g., AWS EC2)"
             }
         }
     }
 
     post {
         always {
-            emailext(
-                to: 'neethuchandhavarkar2003@gmail.com',
-                subject: "Build Status: ${currentBuild.currentResult}",
-                body: "The build has completed with status: ${currentBuild.currentResult}. Please find the attached log file.",
-                attachLog: true
-            )
+            echo "Pipeline execution completed"
         }
     }
 }
