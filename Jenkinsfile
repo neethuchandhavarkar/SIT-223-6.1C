@@ -1,80 +1,115 @@
 pipeline {
     agent any
+    
     environment {
-        DIRECTORYPATH = "DIRECTORY_PATH"
-        TESTINGENVIRONMENT = "TESTING_ENVIRONMENT"
-        PRODUCTIONENVIRONMENT = "NeethuProdEnv"
+        // Define any environment variables needed here
     }
+
     stages {
+        stage('Checkout SCM') {
+            steps {
+                echo 'Checking out source code from Git repository'
+                checkout([$class: 'GitSCM', 
+                          userRemoteConfigs: [[url: 'https://github.com/neethuchandhavarkar/SIT-223-6.1C']],
+                          scm: [$class: 'GitSCM', 
+                                userRemoteConfigs: [[url: 'https://github.com/neethuchandhavarkar/SIT-223-6.1C']],
+                                branches: [[name: '*/main']]
+                          ]])
+            }
+        }
+        
         stage('Build') {
             steps {
-                echo "fetch the source code from the ${DIRECTORYPATH}"
-                echo "compile the code and generate any necessary artifacts"
-                echo "The code is built using the build automation tool named John"
+                echo 'Building the project'
+                echo 'Fetching the source code from the directory'
+                echo 'Compiling the code and generating necessary artifacts'
+                echo 'Using build automation tool named John'
+                // Add your build commands here
             }
         }
-        
+
         stage('Unit and Integration Tests') {
             steps {
-                echo "unit tests"
-                echo "integration tests"
-                echo "John used the automation tool"
-            }
-            post {
-                success {
-                    mail to: "neethuchandhavarkar2003@gmail.com",
-                        subject: "Test Status Email",
-                        body: "Tests are completed successfully"
-                }
+                echo 'Running unit tests'
+                echo 'Running integration tests'
+                echo 'Using automation tool John'
+                // Add your test commands here
             }
         }
-        
+
         stage('Code Analysis') {
             steps {
-                echo "check the quality of the code"
-                echo "SonarQube was used as a tool"
+                echo 'Analyzing code quality'
+                echo 'Using SonarQube for code analysis'
+                // Add your code analysis commands here
             }
         }
-        
+
         stage('Security Scan') {
             steps {
                 script {
-                    def securityScanOutput = sh(script: 'echo "Running VeraCode security scan..." && echo "VeraCode scan complete!" || true', returnStdout: true).trim()
-                    echo securityScanOutput
-                    env.SECURITY_SCAN_LOGS = securityScanOutput
-                }
-            }
-            post {
-                success {
-                    mail to: "neethuchandhavarkar2003@gmail.com",
-                        subject: "Security scan stage ${currentBuild.result}",
-                        body: "Security scan completed successfully.\n\nLogs:\n${env.SECURITY_SCAN_LOGS}"
-                }
-                failure {
-                    mail to: "neethuchandhavarkar2003@gmail.com",
-                        subject: "Security scan stage ${currentBuild.result}",
-                        body: "Security scan failed.\n\nLogs:\n${env.SECURITY_SCAN_LOGS}"
+                    try {
+                        echo 'Performing security scan'
+                        // Add your security scan commands here
+                    } catch (Exception e) {
+                        currentBuild.result = 'FAILURE'
+                        echo "Security scan failed: ${e.message}"
+                    }
                 }
             }
         }
-        
+
         stage('Deploy to Staging') {
+            when {
+                expression {
+                    return currentBuild.result == 'SUCCESS'
+                }
+            }
             steps {
-                echo "In Jenkins, deploy the application to a staging server"
+                echo 'Deploying to staging environment'
+                // Add your deployment commands here
             }
         }
-        
+
         stage('Integration Tests on Staging') {
+            when {
+                expression {
+                    return currentBuild.result == 'SUCCESS'
+                }
+            }
             steps {
-                echo "Run the integration tests on the staging environment to ensure the application functions as expected in a production-like environment"
+                echo 'Running integration tests on staging'
+                // Add your integration test commands here
             }
         }
-        
+
         stage('Deploy to Production') {
-            steps {
-                echo "DEPLOY the code to ${PRODUCTIONENVIRONMENT}"
-                echo "Deploy the application to a production server"
+            when {
+                expression {
+                    return currentBuild.result == 'SUCCESS'
+                }
             }
+            steps {
+                echo 'Deploying to production environment'
+                // Add your production deployment commands here
+            }
+        }
+    }
+
+    post {
+        always {
+            echo 'Sending email notification'
+            mail to: 'neethuchandhavarkar2003@gmail.com',
+                 subject: "Build ${currentBuild.currentResult}: ${currentBuild.fullDisplayName}",
+                 body: "Build ${currentBuild.fullDisplayName} completed with status: ${currentBuild.currentResult}. Check Jenkins for details.",
+                 attachmentsPattern: '**/build/logs/*.log'  // Adjust the pattern to match your log files
+        }
+        failure {
+            echo 'Build failed'
+            mail to: 'neethuchandhavarkar2003@gmail.com',
+                 subject: "Build FAILED: ${currentBuild.fullDisplayName}",
+                 body: "Build ${currentBuild.fullDisplayName} failed. Check Jenkins for details.",
+                 attachmentsPattern: '**/build/logs/*.log'  // Adjust the pattern to match your log files
         }
     }
 }
