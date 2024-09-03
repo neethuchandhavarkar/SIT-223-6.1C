@@ -1,106 +1,109 @@
 pipeline {
     agent any
+    
     environment {
-        DIRECTORYPATH = "DIRECTORY_PATH"
-        TESTINGENVIRONMENT = "TESTING_ENVIRONMENT"
-        PRODUCTIONENVIRONMENT = "NeethuProdEnv"
+        EMAIL_RECIPIENT = 'neethuchandhavarkar2003@gmail.com'
     }
+
     stages {
+        stage('Checkout') {
+            steps {
+                echo 'Fetching the source code from Git repository'
+                checkout scm
+            }
+        }
+
         stage('Build') {
             steps {
-                echo "Fetch the source code from ${DIRECTORYPATH}"
-                echo "Compile the code and generate any necessary artifacts"
-                echo "The code is built using the build automation tool named John"
+                echo 'Fetching the source code from DIRECTORY_PATH'
+                echo 'Compile the code and generate any necessary artifacts'
+                echo 'The code is built using the build automation tool named John'
+                // Add your build steps here
             }
         }
-        
+
         stage('Unit and Integration Tests') {
             steps {
-                echo "Running unit tests"
-                echo "Running integration tests"
-                echo "John used the automation tool"
-            }
-            post {
-                success {
-                    emailext(
-                        to: "neethuchandhavarkar2003@gmail.com",
-                        subject: "Unit and Integration Tests Completed Successfully",
-                        body: "Tests are completed successfully."
-                    )
-                }
-                failure {
-                    emailext(
-                        to: "neethuchandhavarkar2003@gmail.com",
-                        subject: "Unit and Integration Tests Failed",
-                        body: "Some of the tests have failed. Please check the Jenkins build logs for details."
-                    )
-                }
+                echo 'Running unit tests'
+                // Add your unit test command here
+
+                echo 'Running integration tests'
+                // Add your integration test command here
             }
         }
-        
+
         stage('Code Analysis') {
             steps {
-                echo "Checking the quality of the code"
-                echo "SonarQube was used as a tool"
+                echo 'Checking the quality of the code'
+                echo 'SonarQube was used as a tool'
+                // Add your code analysis steps here
             }
         }
-        
+
         stage('Security Scan') {
             steps {
                 script {
-                    def securityScanOutput = sh(script: 'echo "Running VeraCode security scan..." && echo "VeraCode scan complete!" || true', returnStdout: true).trim()
-                    echo securityScanOutput
-                    env.SECURITY_SCAN_LOGS = securityScanOutput
-                }
-            }
-            post {
-                success {
-                    emailext(
-                        to: "neethuchandhavarkar2003@gmail.com",
-                        subject: "Security Scan Completed Successfully",
-                        body: "Security scan completed successfully.\n\nLogs:\n${env.SECURITY_SCAN_LOGS}",
-                        attachLog: true
-                    )
-                }
-                failure {
-                    emailext(
-                        to: "neethuchandhavarkar2003@gmail.com",
-                        subject: "Security Scan Failed",
-                        body: "Security scan failed.\n\nLogs:\n${env.SECURITY_SCAN_LOGS}",
-                        attachLog: true
-                    )
+                    echo 'Running security scan'
+                    // Replace the following line with your actual security scan command
+                    sh 'security-scan-command'
                 }
             }
         }
-        
+
         stage('Deploy to Staging') {
+            when {
+                expression {
+                    return currentBuild.result == 'SUCCESS'
+                }
+            }
             steps {
-                echo "Deploying the application to a staging server"
+                echo 'Deploying to staging environment'
+                // Add your deployment steps here
             }
         }
-        
+
         stage('Integration Tests on Staging') {
+            when {
+                expression {
+                    return currentBuild.result == 'SUCCESS'
+                }
+            }
             steps {
-                echo "Running integration tests on the staging environment to ensure the application functions as expected in a production-like environment"
+                echo 'Running integration tests on staging environment'
+                // Add your staging integration tests here
             }
         }
-        
+
         stage('Deploy to Production') {
+            when {
+                expression {
+                    return currentBuild.result == 'SUCCESS'
+                }
+            }
             steps {
-                echo "Deploying the code to ${PRODUCTIONENVIRONMENT}"
-                echo "Deploying the application to a production server"
+                echo 'Deploying to production environment'
+                // Add your production deployment steps here
             }
         }
     }
+
     post {
         always {
-            echo "Sending build notification email"
             emailext(
-                to: "neethuchandhavarkar2003@gmail.com",
-                subject: "Build ${currentBuild.currentResult}: ${currentBuild.fullDisplayName}",
-                body: "Build ${currentBuild.fullDisplayName} completed with status: ${currentBuild.currentResult}. Check Jenkins for details.",
-                attachLog: true
+                to: EMAIL_RECIPIENT,
+                subject: "Build ${currentBuild.currentResult}: ${env.JOB_NAME} - Build # ${env.BUILD_NUMBER}",
+                body: """
+                <p>Build Details:</p>
+                <p>Job Name: ${env.JOB_NAME}</p>
+                <p>Build Number: ${env.BUILD_NUMBER}</p>
+                <p>Build Status: ${currentBuild.currentResult}</p>
+                <p>Build URL: ${env.BUILD_URL}</p>
+                """,
+                mimeType: 'text/html'
             )
+        }
+        failure {
+            echo 'Build failed. Please check the logs for more details.'
         }
     }
 }
