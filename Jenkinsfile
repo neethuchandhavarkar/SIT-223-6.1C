@@ -57,11 +57,15 @@ pipeline {
 
     post {
         always {
-            // Send the email with the build log attached
-            mail to: "neethuchandhavarkar2003@gmail.com",
-                 subject: "Build Status: ${currentBuild.currentResult}",
-                 body: "The build has completed with status: ${currentBuild.currentResult}. Please check the attached log for details.",
-                 attachLog: true
+            script {
+                def logContent = currentBuild.rawBuild.getLog(100) // Gets the last 100 lines of the build log
+                emailext(
+                    to: 'neethuchandhavarkar2003@gmail.com',
+                    subject: "Build Status: ${currentBuild.currentResult}",
+                    body: "The build has completed with status: ${currentBuild.currentResult}. Please find the attached log file.",
+                    attachLog: true
+                )
+            }
         }
     }
 }
