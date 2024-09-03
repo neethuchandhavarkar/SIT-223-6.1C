@@ -13,33 +13,33 @@ pipeline {
                 echo "The code is built using the build automation tool named John"
             }
         }
-
+        
         stage('Unit and Integration Tests') {
             steps {
                 echo "unit tests"
-                echo "integration test"
-                echo "john used the automation tool"
+                echo "integration tests"
+                echo "John used the automation tool"
             }
             post {
                 success {
                     mail to: "neethuchandhavarkar2003@gmail.com",
-                        subject: "test status email",
-                        body: "test is completed"
+                        subject: "Test Status Email",
+                        body: "Tests are completed successfully"
                 }
             }
         }
-
+        
         stage('Code Analysis') {
             steps {
                 echo "check the quality of the code"
                 echo "SonarQube was used as a tool"
             }
         }
-
+        
         stage('Security Scan') {
             steps {
                 script {
-                    def securityScanOutput = sh(script: 'echo "Running VeraCode security scan..." && echo "VeraCode scan complete!"', returnStdout: true).trim()
+                    def securityScanOutput = sh(script: 'echo "Running VeraCode security scan..." && echo "VeraCode scan complete!" || true', returnStdout: true).trim()
                     echo securityScanOutput
                     env.SECURITY_SCAN_LOGS = securityScanOutput
                 }
@@ -57,19 +57,19 @@ pipeline {
                 }
             }
         }
-
+        
         stage('Deploy to Staging') {
             steps {
-                echo "In Jenkins - deploy the application to a staging server"
+                echo "In Jenkins, deploy the application to a staging server"
             }
         }
-
+        
         stage('Integration Tests on Staging') {
             steps {
                 echo "Run the integration tests on the staging environment to ensure the application functions as expected in a production-like environment"
             }
         }
-
+        
         stage('Deploy to Production') {
             steps {
                 echo "DEPLOY the code to ${PRODUCTIONENVIRONMENT}"
